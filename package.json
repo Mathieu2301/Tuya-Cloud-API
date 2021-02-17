@@ -1,0 +1,24 @@
+{
+  "name": "tuya-cloud",
+  "version": "1.0.0",
+  "description": "API for Tuya Cloud",
+  "main": "main.js",
+  "scripts": {
+    "test": "node test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mathieu2301/Tuya-Cloud-API.git"
+  },
+  "keywords": [
+    "Tuya",
+    "Cloud",
+    "API"
+  ],
+  "author": "Mathieu Colmon",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mathieu2301/Tuya-Cloud-API/issues"
+  },
+  "homepage": "https://github.com/Mathieu2301/Tuya-Cloud-API#readme"
+}
