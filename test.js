@@ -46,6 +46,22 @@ function init(credentials, save = false) {
       console.log(await tempSensor.getStatus());
     }, 10000);
 
+    const light = tuya.device('xxxxxxxxxxxxxxxxxxxxxx');
+
+    console.log(await light.getFunctions());
+    console.log(await light.getStatus());
+
+    light.sendCommands([
+      {
+        code: 'colour_data',
+        value: {
+          h: 120, // Green
+          s: 1000,
+          v: 1000,
+        },
+      },
+    ]);
+
   }).catch((error) => {
     if (fs.existsSync('./credentials.json')) fs.unlinkSync('./credentials.json');
     console.error(error.message);

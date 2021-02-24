@@ -1,7 +1,7 @@
 const https = require('https');
 const crypto = require('crypto');
 
-function request(method = 'GET', path = '', headers = {}) {
+function request(method = 'GET', path = '', headers = {}, data = {}) {
   return new Promise((cb, errCb) => {
     https.request({
       method,
@@ -15,7 +15,7 @@ function request(method = 'GET', path = '', headers = {}) {
       res.on('error', () => {
         errCb(new Error('Request error'));
       });
-      res.on('close', () => {
+      res.on('end', () => {
         try {
           data = JSON.parse(data);
         } catch (err) {
@@ -23,7 +23,7 @@ function request(method = 'GET', path = '', headers = {}) {
         }
         if (typeof data === 'object') cb(data);
       });
-    }).end();
+    }).end(JSON.stringify(data));
   });
 }
 
@@ -79,7 +79,7 @@ function Requester(clientID, secret) {
       }
     },
 
-    async rq(deviceId, path = '', method = 'GET') {
+    async rq(deviceId, path = '', method = 'GET', data = {}) {
       if (Date.now() > expireToken) await getRefreshToken();
 
       const t = Date.now();
@@ -90,7 +90,7 @@ function Requester(clientID, secret) {
         t, sign,
         access_token: accessToken,
         sign_method: 'HMAC-SHA256',
-      });
+      }, data);
     },
   };
 }
@@ -120,6 +120,12 @@ module.exports = {
             },
             async getStatus() {
               return (await requester.rq(deviceId, '/status')).result;
+            },
+            async getFunctions() {
+              return (await requester.rq(deviceId, '/functions')).result;
+            },
+            async sendCommands(commands) {
+              return (await requester.rq(deviceId, '/commands', 'POST', { commands }));
             },
           }
         },
