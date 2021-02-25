@@ -43,11 +43,12 @@ function Requester(clientID, secret) {
     const t = Date.now();
     const sign = calcSign(t);
 
-    const rs = request('GET', `token/${refreshToken}`, {
+    const rs = await request('GET', `token/${refreshToken}`, {
       client_id: clientID,
       t, sign,
       sign_method: 'HMAC-SHA256',
     });
+
     if (rs.result && rs.result.access_token && rs.result.refresh_token) {
       refreshToken = rs.result.refresh_token;
       accessToken = rs.result.access_token;
