@@ -1,6 +1,6 @@
 {
   "name": "tuya-cloud",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "API for Tuya Cloud",
   "main": "main.js",
   "scripts": {

@@ -8,7 +8,6 @@ function request(method = 'GET', path = '', headers = {}, data = {}) {
       hostname: 'openapi.tuyaeu.com',
       path: `/v1.0/${path}`,
       headers,
-      maxRedirects: 20,
     }, (res) => {
       let data = '';
       res.on('data', (d) => data += d);
@@ -28,36 +27,14 @@ function request(method = 'GET', path = '', headers = {}, data = {}) {
 }
 
 function Requester(clientID, secret) {
-  function calcSign(t) {
-    return crypto.createHmac('sha256', secret).update(`${clientID}${t}`).digest('hex').toUpperCase();
-  }
-  function calcSign2(t) {
-    return crypto.createHmac('sha256', secret).update(`${clientID}${accessToken}${t}`).digest('hex').toUpperCase();
+  function calcSign(t, token = '') {
+    return crypto.createHmac('sha256', secret).update(`${clientID}${token}${t}`).digest('hex').toUpperCase();
   }
 
-  let refreshToken = '';
-  let accessToken = '';
-  let expireToken = 0;
-
-  async function getRefreshToken() {
-    const t = Date.now();
-    const sign = calcSign(t);
-
-    const rs = await request('GET', `token/${refreshToken}`, {
-      client_id: clientID,
-      t, sign,
-      sign_method: 'HMAC-SHA256',
-    });
-
-    if (rs.result && rs.result.access_token && rs.result.refresh_token) {
-      refreshToken = rs.result.refresh_token;
-      accessToken = rs.result.access_token;
-      expireToken = t + (rs.result.expire_time * 1000);
-      return;
-    } else {
-      throw new Error('Can\'t refresh token');
-    }
-  }
+  const session = {
+    token: '',
+    expire: 0,
+  };
 
   return {
     async getAccessToken() {
@@ -70,26 +47,24 @@ function Requester(clientID, secret) {
         sign_method: 'HMAC-SHA256',
       });
 
-      if (rs.result && rs.result.access_token && rs.result.refresh_token) {
-        refreshToken = rs.result.refresh_token;
-        accessToken = rs.result.access_token;
-        expireToken = t + (rs.result.expire_time * 1000);
-        return rs;
-      } else {
-        throw new Error('Can\'t get token');
+      if (rs.result && rs.result.access_token) {
+        session.token = rs.result.access_token;
+        session.expire = t + (rs.result.expire_time * 1000);
       }
+
+      return rs;
     },
 
     async rq(deviceId, path = '', method = 'GET', data = {}) {
-      if (Date.now() > expireToken) await getRefreshToken();
+      if (Date.now() > session.expire) await this.getAccessToken();
 
       const t = Date.now();
-      const sign = calcSign2(t);
+      const sign = calcSign(t, session.token);
 
       return request(method, `devices/${deviceId}${path}`, {
         client_id: clientID,
         t, sign,
-        access_token: accessToken,
+        access_token: session.token,
         sign_method: 'HMAC-SHA256',
       }, data);
     },
@@ -109,7 +84,7 @@ module.exports = {
       const accesToken = await requester.getAccessToken();
 
       if (!accesToken.success) {
-        errCb(new Error('Wrong "Cloud ID" or "Secret"'));
+        errCb(new Error(`Can't login to API: ${accesToken.msg}`));
         return;
       }
 
