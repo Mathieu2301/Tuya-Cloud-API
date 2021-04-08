@@ -1,32 +1,32 @@
 const https = require('https');
 const crypto = require('crypto');
 
-function request(method = 'GET', path = '', headers = {}, data = {}) {
-  return new Promise((cb, errCb) => {
-    https.request({
-      method,
-      hostname: 'openapi.tuyaeu.com',
-      path: `/v1.0/${path}`,
-      headers,
-    }, (res) => {
-      let data = '';
-      res.on('data', (d) => data += d);
-      res.on('error', () => {
-        errCb(new Error('Request error'));
-      });
-      res.on('end', () => {
-        try {
-          data = JSON.parse(data);
-        } catch (err) {
-          errCb(new Error('Can\'t parse server response'));
-        }
-        if (typeof data === 'object') cb(data);
-      });
-    }).end(JSON.stringify(data));
-  });
-}
+function Requester(clientID, secret, region) {
+  function request(method = 'GET', path = '', headers = {}, data = {}) {
+    return new Promise((cb, errCb) => {
+      https.request({
+        method,
+        hostname: `openapi.tuya${region}.com`,
+        path: `/v1.0/${path}`,
+        headers,
+      }, (res) => {
+        let data = '';
+        res.on('data', (d) => data += d);
+        res.on('error', () => {
+          errCb(new Error('Request error'));
+        });
+        res.on('end', () => {
+          try {
+            data = JSON.parse(data);
+          } catch (err) {
+            errCb(new Error('Can\'t parse server response'));
+          }
+          if (typeof data === 'object') cb(data);
+        });
+      }).end(JSON.stringify(data));
+    });
+  }
 
-function Requester(clientID, secret) {
   function calcSign(t, token = '') {
     return crypto.createHmac('sha256', secret).update(`${clientID}${token}${t}`).digest('hex').toUpperCase();
   }
@@ -72,14 +72,19 @@ function Requester(clientID, secret) {
 }
 
 module.exports = {
-  connect(credentials = { clientID: '', secret: '' }) {
+  connect(credentials = { clientID: '', secret: '', region: '' }) {
     return new Promise(async (cb, errCb) => {
       if (!credentials || !credentials.clientID || !credentials.secret) {
         errCb(new Error('Please specify Tuya Cloud "Client ID" and "Secret"'));
         return;
       }
 
-      const requester = new Requester(credentials.clientID, credentials.secret);
+      if (!credentials.region) credentials.region = 'eu';
+      const requester = new Requester(
+        credentials.clientID,
+        credentials.secret,
+        credentials.region,
+      );
 
       const accesToken = await requester.getAccessToken();
 

@@ -13,11 +13,13 @@ if (!fs.existsSync('./credentials.json') || !fs.statSync('./credentials.json').i
     console.clear();
     rl.question('What is your Tuya Cloud "Secret" ? ', (secret) => {
       console.clear();
-      rl.close();
+      rl.question('What is your Tuya Cloud server region ? (eu / us / cn / in) ', (region) => {
+        console.clear();
+        rl.close();
 
-      if (!clientID || !secret) process.exit(200);
-
-      init({ clientID, secret }, true);
+        if (!clientID || !secret) process.exit(200);
+        init({ clientID, secret, region }, true);
+      });
     });
   });
 } else {
@@ -41,8 +43,9 @@ function init(credentials, save = false) {
 
     const tempSensor = tuya.device('xxxxxxxxxxxxxxxxxxxxxx');
 
+    console.log(await tempSensor.getInfos());
+
     setInterval(async () => {
-      console.log(await tempSensor.getInfos());
       console.log(await tempSensor.getStatus());
     }, 10000);
 

@@ -16,6 +16,7 @@ npm i tuya-cloud
 const tuyaCloud = require('tuya-cloud');
 
 tuyaCloud.connect({
+  region: 'eu', // eu (Default) / us / cn / in
   clientID: 'xxxxxxxxxxxxxxxxxxxx',
   secret: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
 }).then(async (tuya) => {
